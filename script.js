@@ -1,61 +1,511 @@
-const form = document.getElementById("transactionForm");
+/* =====================================================
+   EXPENSEX - AUTHENTICATION
+   ===================================================== */
 
-const amountInput = document.getElementById("amount");
-const categoryInput = document.getElementById("category");
-const descriptionInput = document.getElementById("description");
-const dateInput = document.getElementById("date");
 
-const errorMessage = document.getElementById("errorMessage");
+/* ================= AUTH ELEMENTS ================= */
 
-const searchInput = document.getElementById("search");
-const categoryFilter = document.getElementById("categoryFilter");
-const typeFilter = document.getElementById("typeFilter");
+const authScreen =
+    document.getElementById("authScreen");
 
-const transactionTable = document.getElementById("transactionTable");
-const mobileTransactions = document.getElementById("mobileTransactions");
-const emptyMessage = document.getElementById("emptyMessage");
+const loginBox =
+    document.getElementById("loginBox");
 
-const totalIncome = document.getElementById("totalIncome");
-const totalExpense = document.getElementById("totalExpense");
-const balance = document.getElementById("balance");
+const registerBox =
+    document.getElementById("registerBox");
 
-const transactionCount = document.getElementById("transactionCount");
-const mostUsedCategory = document.getElementById("mostUsedCategory");
+const loginForm =
+    document.getElementById("loginForm");
 
-const clearAllBtn = document.getElementById("clearAllBtn");
+const registerForm =
+    document.getElementById("registerForm");
+
+const showRegister =
+    document.getElementById("showRegister");
+
+const showLogin =
+    document.getElementById("showLogin");
+
+const loginError =
+    document.getElementById("loginError");
+
+const registerError =
+    document.getElementById("registerError");
+
+const logoutBtn =
+    document.getElementById("logoutBtn");
+
+const userNameDisplay =
+    document.getElementById("userNameDisplay");
+
+
+/* ================= USER FUNCTIONS ================= */
+
+function getUsers() {
+
+    return JSON.parse(
+        localStorage.getItem("expenseXUsers")
+    ) || [];
+
+}
+
+
+function saveUsers(users) {
+
+    localStorage.setItem(
+        "expenseXUsers",
+        JSON.stringify(users)
+    );
+
+}
+
+
+function getCurrentUser() {
+
+    return JSON.parse(
+        localStorage.getItem(
+            "expenseXCurrentUser"
+        )
+    );
+
+}
+
+
+function setCurrentUser(user) {
+
+    localStorage.setItem(
+        "expenseXCurrentUser",
+        JSON.stringify(user)
+    );
+
+}
+
+
+function showAuthError(element, message) {
+
+    element.textContent = message;
+
+    element.classList.remove("hidden");
+
+}
+
+
+function hideAuthError(element) {
+
+    element.textContent = "";
+
+    element.classList.add("hidden");
+
+}
+
+
+/* ================= LOGIN / REGISTER SWITCH ================= */
+
+showRegister.addEventListener(
+    "click",
+    function () {
+
+        loginBox.classList.add("hidden");
+
+        registerBox.classList.remove("hidden");
+
+        hideAuthError(loginError);
+
+        hideAuthError(registerError);
+
+    }
+);
+
+
+showLogin.addEventListener(
+    "click",
+    function () {
+
+        registerBox.classList.add("hidden");
+
+        loginBox.classList.remove("hidden");
+
+        hideAuthError(loginError);
+
+        hideAuthError(registerError);
+
+    }
+);
+
+
+/* ================= REGISTER ================= */
+
+registerForm.addEventListener(
+    "submit",
+    function (e) {
+
+        e.preventDefault();
+
+
+        const name =
+            document
+                .getElementById("registerName")
+                .value
+                .trim();
+
+
+        const email =
+            document
+                .getElementById("registerEmail")
+                .value
+                .trim()
+                .toLowerCase();
+
+
+        const password =
+            document
+                .getElementById("registerPassword")
+                .value;
+
+
+        const users = getUsers();
+
+
+        const existingUser =
+            users.find(
+                user =>
+                    user.email === email
+            );
+
+
+        if (existingUser) {
+
+            showAuthError(
+                registerError,
+                "An account with this email already exists."
+            );
+
+            return;
+
+        }
+
+
+        if (password.length < 6) {
+
+            showAuthError(
+                registerError,
+                "Password must be at least 6 characters."
+            );
+
+            return;
+
+        }
+
+
+        const newUser = {
+
+            id: Date.now(),
+
+            name: name,
+
+            email: email,
+
+            password: password
+
+        };
+
+
+        users.push(newUser);
+
+        saveUsers(users);
+
+
+        setCurrentUser({
+
+            id: newUser.id,
+
+            name: newUser.name,
+
+            email: newUser.email
+
+        });
+
+
+        registerForm.reset();
+
+
+        initializeApp();
+
+    }
+);
+
+
+/* ================= LOGIN ================= */
+
+loginForm.addEventListener(
+    "submit",
+    function (e) {
+
+        e.preventDefault();
+
+
+        const email =
+            document
+                .getElementById("loginEmail")
+                .value
+                .trim()
+                .toLowerCase();
+
+
+        const password =
+            document
+                .getElementById("loginPassword")
+                .value;
+
+
+        const users = getUsers();
+
+
+        const user =
+            users.find(
+                user =>
+                    user.email === email &&
+                    user.password === password
+            );
+
+
+        if (!user) {
+
+            showAuthError(
+                loginError,
+                "Invalid email or password."
+            );
+
+            return;
+
+        }
+
+
+        setCurrentUser({
+
+            id: user.id,
+
+            name: user.name,
+
+            email: user.email
+
+        });
+
+
+        loginForm.reset();
+
+
+        initializeApp();
+
+    }
+);
+
+
+/* ================= LOGOUT ================= */
+
+logoutBtn.addEventListener(
+    "click",
+    function () {
+
+        localStorage.removeItem(
+            "expenseXCurrentUser"
+        );
+
+
+        location.reload();
+
+    }
+);
+
+
+/* =====================================================
+   TRANSACTION SYSTEM
+   ===================================================== */
+
+
+/* ================= FORM ELEMENTS ================= */
+
+const form =
+    document.getElementById("transactionForm");
+
+const amountInput =
+    document.getElementById("amount");
+
+const categoryInput =
+    document.getElementById("category");
+
+const descriptionInput =
+    document.getElementById("description");
+
+const dateInput =
+    document.getElementById("date");
+
+const errorMessage =
+    document.getElementById("errorMessage");
+
+
+const searchInput =
+    document.getElementById("search");
+
+const categoryFilter =
+    document.getElementById("categoryFilter");
+
+const typeFilter =
+    document.getElementById("typeFilter");
+
+
+const transactionTable =
+    document.getElementById("transactionTable");
+
+const mobileTransactions =
+    document.getElementById("mobileTransactions");
+
+const emptyMessage =
+    document.getElementById("emptyMessage");
+
+
+const totalIncome =
+    document.getElementById("totalIncome");
+
+const totalExpense =
+    document.getElementById("totalExpense");
+
+const balance =
+    document.getElementById("balance");
+
+
+const transactionCount =
+    document.getElementById("transactionCount");
+
+const mostUsedCategory =
+    document.getElementById("mostUsedCategory");
+
+
+const clearAllBtn =
+    document.getElementById("clearAllBtn");
+
 
 const descriptionWrapper =
-    document.getElementById("descriptionWrapper");
+    document.getElementById(
+        "descriptionWrapper"
+    );
+
 
 const categoryLabel =
-    document.querySelector('label[for="category"]');
+    document.querySelector(
+        'label[for="category"]'
+    );
+
 
 const typeRadios =
-    document.querySelectorAll('input[name="type"]');
+    document.querySelectorAll(
+        'input[name="type"]'
+    );
 
 
-let transactions =
-    JSON.parse(localStorage.getItem("transactions")) || [];
+/* ================= TRANSACTIONS ================= */
 
+let transactions = [];
+
+
+/* ================= CATEGORIES ================= */
 
 const incomeCategories = [
+
     "Pocket Money",
+
     "Salary",
+
     "Scholarship",
+
     "Gift",
+
     "Freelance",
+
     "Other Income"
+
 ];
 
 
 const expenseCategories = [
+
     "Food",
+
     "Travel",
+
     "Shopping",
+
     "Education",
+
     "Bills",
+
     "Other Expense"
+
 ];
+
+
+/* ================= TRANSACTION STORAGE ================= */
+
+function getTransactionKey() {
+
+    const currentUser =
+        getCurrentUser();
+
+
+    if (!currentUser) {
+
+        return null;
+
+    }
+
+
+    return `expenseXTransactions_${currentUser.email}`;
+
+}
+
+
+function loadUserTransactions() {
+
+    const key =
+        getTransactionKey();
+
+
+    if (!key) {
+
+        transactions = [];
+
+        return;
+
+    }
+
+
+    transactions =
+        JSON.parse(
+            localStorage.getItem(key)
+        ) || [];
+
+}
+
+
+function saveTransactions() {
+
+    const key =
+        getTransactionKey();
+
+
+    if (!key) {
+
+        return;
+
+    }
+
+
+    localStorage.setItem(
+        key,
+        JSON.stringify(transactions)
+    );
+
+}
 
 
 /* ================= CATEGORY UPDATE ================= */
@@ -86,179 +536,203 @@ function updateCategoryOptions() {
         </option>`;
 
 
-    categories.forEach(category => {
+    categories.forEach(
+        category => {
 
-        const option =
-            document.createElement("option");
-
-        option.value = category;
-        option.textContent = category;
-
-        categoryInput.appendChild(option);
-
-    });
+            const option =
+                document.createElement(
+                    "option"
+                );
 
 
-    /* Description for both Income and Expense */
+            option.value =
+                category;
 
-    descriptionWrapper.classList.remove("hidden");
+
+            option.textContent =
+                category;
+
+
+            categoryInput.appendChild(
+                option
+            );
+
+        }
+    );
+
+
+    /* Description for BOTH types */
+
+    descriptionWrapper.classList.remove(
+        "hidden"
+    );
+
 
     descriptionInput.required = true;
-}
-
-
-typeRadios.forEach(radio => {
-
-    radio.addEventListener(
-        "change",
-        updateCategoryOptions
-    );
-
-});
-
-
-/* ================= LOCAL STORAGE ================= */
-
-function saveTransactions() {
-
-    localStorage.setItem(
-        "transactions",
-        JSON.stringify(transactions)
-    );
 
 }
+
+
+typeRadios.forEach(
+    radio => {
+
+        radio.addEventListener(
+            "change",
+            updateCategoryOptions
+        );
+
+    }
+);
 
 
 /* ================= ERROR MESSAGE ================= */
 
 function showError(message) {
 
-    errorMessage.textContent = message;
+    errorMessage.textContent =
+        message;
 
-    errorMessage.classList.remove("hidden");
+
+    errorMessage.classList.remove(
+        "hidden"
+    );
 
 
-    setTimeout(() => {
+    setTimeout(
+        () => {
 
-        errorMessage.classList.add("hidden");
+            errorMessage.classList.add(
+                "hidden"
+            );
 
-    }, 3000);
+        },
+        3000
+    );
 
 }
 
 
 /* ================= ADD TRANSACTION ================= */
 
-form.addEventListener("submit", function (e) {
+form.addEventListener(
+    "submit",
+    function (e) {
 
-    e.preventDefault();
-
-
-    const amount =
-        parseFloat(amountInput.value);
+        e.preventDefault();
 
 
-    const category =
-        categoryInput.value;
+        const amount =
+            parseFloat(
+                amountInput.value
+            );
 
 
-    const description =
-        descriptionInput.value.trim();
+        const category =
+            categoryInput.value;
 
 
-    const date =
-        dateInput.value;
+        const description =
+            descriptionInput.value
+                .trim();
 
 
-    const type =
+        const date =
+            dateInput.value;
+
+
+        const type =
+            document.querySelector(
+                'input[name="type"]:checked'
+            ).value;
+
+
+        if (!amount || amount <= 0) {
+
+            showError(
+                "Please enter a valid amount."
+            );
+
+            return;
+
+        }
+
+
+        if (!category) {
+
+            showError(
+                "Please select a category."
+            );
+
+            return;
+
+        }
+
+
+        if (!description) {
+
+            showError(
+                "Description cannot be empty."
+            );
+
+            return;
+
+        }
+
+
+        if (!date) {
+
+            showError(
+                "Please select a date."
+            );
+
+            return;
+
+        }
+
+
+        const transaction = {
+
+            id: Date.now(),
+
+            description: description,
+
+            amount: amount,
+
+            category: category,
+
+            date: date,
+
+            type: type
+
+        };
+
+
+        transactions.push(
+            transaction
+        );
+
+
+        saveTransactions();
+
+
+        form.reset();
+
+
         document.querySelector(
-            'input[name="type"]:checked'
-        ).value;
+            'input[name="type"][value="Income"]'
+        ).checked = true;
 
 
-    if (!amount || amount <= 0) {
-
-        showError(
-            "Please enter a valid amount."
-        );
-
-        return;
-
-    }
+        updateCategoryOptions();
 
 
-    if (!category) {
+        renderTransactions();
 
-        showError(
-            "Please select a category."
-        );
 
-        return;
+        updateDashboard();
 
     }
-
-
-    if (description === "") {
-
-        showError(
-            "Description cannot be empty."
-        );
-
-        return;
-
-    }
-
-
-    if (!date) {
-
-        showError(
-            "Please select a date."
-        );
-
-        return;
-
-    }
-
-
-    const transaction = {
-
-        id: Date.now(),
-
-        description: description,
-
-        amount: amount,
-
-        category: category,
-
-        date: date,
-
-        type: type
-
-    };
-
-
-    transactions.push(transaction);
-
-    saveTransactions();
-
-
-    form.reset();
-
-
-    /* Set Income as default after adding */
-
-    document.querySelector(
-        'input[name="type"][value="Income"]'
-    ).checked = true;
-
-
-    updateCategoryOptions();
-
-    renderTransactions();
-
-    updateDashboard();
-
-});
+);
 
 
 /* ================= DELETE TRANSACTION ================= */
@@ -274,7 +748,9 @@ function deleteTransaction(id) {
 
     saveTransactions();
 
+
     renderTransactions();
+
 
     updateDashboard();
 
@@ -300,244 +776,346 @@ function renderTransactions() {
 
 
     const filteredTransactions =
-        transactions.filter(transaction => {
+        transactions.filter(
+            transaction => {
 
-            const description =
-                transaction.description || "";
-
-
-            const matchesSearch =
-                description
-                    .toLowerCase()
-                    .includes(searchTerm) ||
-
-                transaction.category
-                    .toLowerCase()
-                    .includes(searchTerm);
+                const description =
+                    transaction.description ||
+                    "";
 
 
-            const matchesCategory =
-                selectedCategory === "All" ||
-                transaction.category ===
+                const matchesSearch =
+
+                    description
+                        .toLowerCase()
+                        .includes(
+                            searchTerm
+                        )
+
+                    ||
+
+                    transaction.category
+                        .toLowerCase()
+                        .includes(
+                            searchTerm
+                        );
+
+
+                const matchesCategory =
+
+                    selectedCategory === "All"
+
+                    ||
+
+                    transaction.category ===
                     selectedCategory;
 
 
-            const matchesType =
-                selectedType === "All" ||
-                transaction.type ===
+                const matchesType =
+
+                    selectedType === "All"
+
+                    ||
+
+                    transaction.type ===
                     selectedType;
 
 
-            return (
-                matchesSearch &&
-                matchesCategory &&
-                matchesType
-            );
+                return (
 
-        });
+                    matchesSearch &&
+
+                    matchesCategory &&
+
+                    matchesType
+
+                );
+
+            }
+        );
 
 
-    transactionTable.innerHTML = "";
+    transactionTable.innerHTML =
+        "";
 
-    mobileTransactions.innerHTML = "";
+
+    mobileTransactions.innerHTML =
+        "";
 
 
-    if (filteredTransactions.length === 0) {
+    if (
+        filteredTransactions.length === 0
+    ) {
 
-        emptyMessage.classList.remove("hidden");
+        emptyMessage.classList.remove(
+            "hidden"
+        );
 
         return;
 
     }
 
 
-    emptyMessage.classList.add("hidden");
+    emptyMessage.classList.add(
+        "hidden"
+    );
 
 
     filteredTransactions
         .slice()
         .reverse()
-        .forEach(transaction => {
+        .forEach(
+            transaction => {
 
 
-            const amountClass =
-                transaction.type === "Income"
-                    ? "text-green-600"
-                    : "text-red-600";
+                const amountClass =
+                    transaction.type === "Income"
+
+                        ? "text-green-600"
+
+                        : "text-red-600";
 
 
-            const sign =
-                transaction.type === "Income"
-                    ? "+"
-                    : "-";
+                const sign =
+                    transaction.type === "Income"
+
+                        ? "+"
+
+                        : "-";
 
 
-            /* Desktop Table Row */
+                const typeBadge =
+                    transaction.type === "Income"
 
-            const row =
-                document.createElement("tr");
+                        ? "bg-green-100 text-green-700"
 
-
-            row.className =
-                "border-b hover:bg-slate-50 transition-all duration-200";
+                        : "bg-red-100 text-red-700";
 
 
-            row.innerHTML = `
+                /* Desktop Row */
 
-                <td class="px-6 py-4 font-medium">
-                    ${transaction.description || "-"}
-                </td>
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
 
-                <td class="px-6 py-4">
-                    ${transaction.category}
-                </td>
 
-                <td class="px-6 py-4">
-                    ${transaction.date}
-                </td>
+                row.className =
+                    "border-b hover:bg-slate-50 transition-all duration-200";
 
-                <td class="px-6 py-4">
 
-                    <span class="
-                        px-3 py-1 rounded-full
-                        text-xs font-semibold
-                        ${
-                            transaction.type === "Income"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                        }
-                    ">
+                row.innerHTML = `
 
-                        ${transaction.type}
+                    <td class="px-6 py-4 font-medium">
+                        ${escapeHTML(
+                            transaction.description ||
+                            "-"
+                        )}
+                    </td>
 
-                    </span>
+                    <td class="px-6 py-4">
+                        ${escapeHTML(
+                            transaction.category
+                        )}
+                    </td>
 
-                </td>
+                    <td class="px-6 py-4">
+                        ${escapeHTML(
+                            transaction.date
+                        )}
+                    </td>
 
-                <td class="
-                    px-6 py-4
-                    font-bold
-                    ${amountClass}
-                ">
+                    <td class="px-6 py-4">
 
-                    ${sign} ₹${transaction.amount.toFixed(2)}
-
-                </td>
-
-                <td class="px-6 py-4">
-
-                    <button
-                        onclick="deleteTransaction(${transaction.id})"
-                        class="
-                            bg-red-50
-                            text-red-600
-                            px-3 py-1.5
-                            rounded-lg
-                            hover:bg-red-100
-                            transition-all duration-200
+                        <span class="
+                            px-3 py-1 rounded-full
+                            text-xs font-semibold
+                            ${typeBadge}
                         ">
 
-                        Delete
+                            ${transaction.type}
 
-                    </button>
+                        </span>
 
-                </td>
+                    </td>
 
-            `;
+                    <td class="
+                        px-6 py-4
+                        font-bold
+                        ${amountClass}
+                    ">
+
+                        ${sign} ₹${Number(
+                            transaction.amount
+                        ).toFixed(2)}
+
+                    </td>
+
+                    <td class="px-6 py-4">
+
+                        <button
+                            onclick="deleteTransaction(${transaction.id})"
+                            class="
+                                bg-red-50
+                                text-red-600
+                                px-3 py-1.5
+                                rounded-lg
+                                hover:bg-red-100
+                                transition-all duration-200
+                            ">
+
+                            Delete
+
+                        </button>
+
+                    </td>
+
+                `;
 
 
-            transactionTable.appendChild(row);
+                transactionTable.appendChild(
+                    row
+                );
 
 
-            /* Mobile Card */
+                /* Mobile Card */
 
-            const card =
-                document.createElement("div");
-
-
-            card.className =
-                "bg-slate-50 rounded-2xl p-5 shadow-sm";
+                const card =
+                    document.createElement(
+                        "div"
+                    );
 
 
-            card.innerHTML = `
+                card.className =
+                    "bg-slate-50 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200";
 
-                <div
-                    class="flex justify-between
-                           items-start gap-4">
 
-                    <div>
+                card.innerHTML = `
 
-                        <p class="font-bold">
-                            ${
-                                transaction.description ||
-                                transaction.category
-                            }
-                        </p>
+                    <div
+                        class="flex justify-between
+                               items-start gap-4">
 
-                        <p class="text-sm text-slate-500 mt-1">
+                        <div>
 
-                            ${transaction.category}
-                            •
-                            ${transaction.date}
+                            <p class="font-bold">
+
+                                ${escapeHTML(
+                                    transaction.description ||
+                                    transaction.category
+                                )}
+
+                            </p>
+
+                            <p
+                                class="text-sm
+                                       text-slate-500 mt-1">
+
+                                ${escapeHTML(
+                                    transaction.category
+                                )}
+
+                                •
+
+                                ${escapeHTML(
+                                    transaction.date
+                                )}
+
+                            </p>
+
+                        </div>
+
+
+                        <p class="
+                            font-bold
+                            ${amountClass}
+                        ">
+
+                            ${sign}
+                            ₹${Number(
+                                transaction.amount
+                            ).toFixed(2)}
 
                         </p>
 
                     </div>
 
 
-                    <p class="
-                        font-bold
-                        ${amountClass}
-                    ">
-
-                        ${sign}
-                        ₹${transaction.amount.toFixed(2)}
-
-                    </p>
-
-                </div>
+                    <div
+                        class="flex justify-between
+                               items-center mt-4">
 
 
-                <div
-                    class="flex justify-between
-                           items-center mt-4">
-
-
-                    <span class="
-                        px-3 py-1 rounded-full
-                        text-xs font-semibold
-                        ${
-                            transaction.type === "Income"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                        }
-                    ">
-
-                        ${transaction.type}
-
-                    </span>
-
-
-                    <button
-                        onclick="deleteTransaction(${transaction.id})"
-                        class="
-                            text-red-600
-                            text-sm
-                            font-semibold
+                        <span class="
+                            px-3 py-1 rounded-full
+                            text-xs font-semibold
+                            ${typeBadge}
                         ">
 
-                        Delete
+                            ${transaction.type}
 
-                    </button>
-
-                </div>
-
-            `;
+                        </span>
 
 
-            mobileTransactions.appendChild(card);
+                        <button
+                            onclick="deleteTransaction(${transaction.id})"
+                            class="
+                                text-red-600
+                                text-sm
+                                font-semibold
+                                hover:text-red-800
+                                transition-colors
+                            ">
 
-        });
+                            Delete
+
+                        </button>
+
+                    </div>
+
+                `;
+
+
+                mobileTransactions.appendChild(
+                    card
+                );
+
+            }
+        );
+
+}
+
+
+/* ================= HTML SECURITY ================= */
+
+function escapeHTML(value) {
+
+    return String(value)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
 
@@ -551,19 +1129,30 @@ function updateDashboard() {
     let expense = 0;
 
 
-    transactions.forEach(transaction => {
+    transactions.forEach(
+        transaction => {
 
-        if (transaction.type === "Income") {
+            const amount =
+                Number(
+                    transaction.amount
+                ) || 0;
 
-            income += transaction.amount;
 
-        } else {
+            if (
+                transaction.type ===
+                "Income"
+            ) {
 
-            expense += transaction.amount;
+                income += amount;
+
+            } else {
+
+                expense += amount;
+
+            }
 
         }
-
-    });
+    );
 
 
     totalIncome.textContent =
@@ -575,7 +1164,9 @@ function updateDashboard() {
 
 
     balance.textContent =
-        `₹${(income - expense).toFixed(2)}`;
+        `₹${(
+            income - expense
+        ).toFixed(2)}`;
 
 
     transactionCount.textContent =
@@ -587,11 +1178,14 @@ function updateDashboard() {
     const expenseTransactions =
         transactions.filter(
             transaction =>
-                transaction.type === "Expense"
+                transaction.type ===
+                "Expense"
         );
 
 
-    if (expenseTransactions.length === 0) {
+    if (
+        expenseTransactions.length === 0
+    ) {
 
         mostUsedCategory.textContent =
             "None";
@@ -604,20 +1198,33 @@ function updateDashboard() {
     const categoryCounts = {};
 
 
-    expenseTransactions.forEach(transaction => {
+    expenseTransactions.forEach(
+        transaction => {
 
-        categoryCounts[transaction.category] =
-            (categoryCounts[transaction.category] || 0) + 1;
+            categoryCounts[
+                transaction.category
+            ] =
+                (
+                    categoryCounts[
+                        transaction.category
+                    ] || 0
+                ) + 1;
 
-    });
+        }
+    );
 
 
     const mostUsed =
-        Object.keys(categoryCounts).reduce(
+        Object.keys(
+            categoryCounts
+        ).reduce(
             (a, b) =>
+
                 categoryCounts[a] >=
                 categoryCounts[b]
+
                     ? a
+
                     : b
         );
 
@@ -658,7 +1265,10 @@ clearAllBtn.addEventListener(
     "click",
     function () {
 
-        if (transactions.length === 0) {
+
+        if (
+            transactions.length === 0
+        ) {
 
             return;
 
@@ -683,7 +1293,9 @@ clearAllBtn.addEventListener(
 
         saveTransactions();
 
+
         renderTransactions();
+
 
         updateDashboard();
 
@@ -691,10 +1303,50 @@ clearAllBtn.addEventListener(
 );
 
 
-/* ================= INITIAL LOAD ================= */
+/* =====================================================
+   INITIALIZE APPLICATION
+   ===================================================== */
 
-updateCategoryOptions();
+function initializeApp() {
 
-renderTransactions();
+    const currentUser =
+        getCurrentUser();
 
-updateDashboard();
+
+    if (!currentUser) {
+
+        authScreen.classList.remove(
+            "hidden"
+        );
+
+        return;
+
+    }
+
+
+    authScreen.classList.add(
+        "hidden"
+    );
+
+
+    userNameDisplay.textContent =
+        `👋 ${currentUser.name}`;
+
+
+    loadUserTransactions();
+
+
+    updateCategoryOptions();
+
+
+    renderTransactions();
+
+
+    updateDashboard();
+
+}
+
+
+/* ================= START APP ================= */
+
+initializeApp();
